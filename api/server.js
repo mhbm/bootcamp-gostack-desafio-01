@@ -7,7 +7,6 @@ server.use(express.json());
 let projects = [];
 
 function verifyProjectIdExist(request, response, next) {
-  console.log(request.params.id);
   if (projects.length <= request.params.id) {
     return response.status(400).json({
       "message": "ProjectId does not exist"
@@ -16,14 +15,20 @@ function verifyProjectIdExist(request, response, next) {
   next();
 }
 
-server.get("/projects", (request, response) => {
-  console.log("Chamada do projets");
+function middleware(request, response, next) {
+  console.time("Request");
+  console.count("Request number: ")
+  next();
+  console.timeEnd("Request");
+}
+
+server.get("/projects", middleware, (request, response) => {
   return response.status(200).json(projects)
 });
 
-server.post("/projects", (request, response) => {
+server.post("/projects", middleware, (request, response) => {
   let project = {
-    id : request.body.id,
+    id: request.body.id,
     title: request.body.title,
     tasks: []
   }
@@ -31,20 +36,22 @@ server.post("/projects", (request, response) => {
   return response.status(201).json(project);
 });
 
-server.put("/projects/:id", verifyProjectIdExist, (request, response) => {
+server.put("/projects/:id", middleware, verifyProjectIdExist, (request, response) => {
   projects[request.params.id].title = request.body.title
 
   return response.status(200).json(projects[request.params.id]);
 });
 
-server.delete("/projects/:id", verifyProjectIdExist, (request, response) => {
+server.delete("/projects/:id", middleware, verifyProjectIdExist, (request, response) => {
   projects.splice(request.params.id, 1);
   return response.status(200).json(projects);
 });
 
-server.post("/projects/:id/tasks", verifyProjectIdExist, (request, response)=> {
+server.post("/projects/:id/tasks", middleware, verifyProjectIdExist, (request, response) => {
   projects[request.params.id].tasks.push(request.body.title);
   return response.status(201).json(projects[request.params.id]);
 })
 
-server.listen(4444);
+server.listen(4444, () => {
+  console.log("Server working at 4444 port")
+});
